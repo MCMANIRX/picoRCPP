@@ -1,0 +1,51 @@
+#include "Module.h"
+#include "lwip/ip_addr.h"
+#include <iostream>
+
+class WiFiModule : public Module {
+
+    ip_addr_t ip;
+    std::string ssid = "";
+    std::string pass = "";
+    int32_t rssi = 0;
+
+    public:
+
+
+        WiFiModule(std::string ssid, std::string pass);
+        ~WiFiModule();
+
+
+        int getRSSI() const;
+        uint32_t getIP() const;
+
+        int initWiFi();
+        int stopWiFi();
+
+
+        virtual int init() {
+
+            return initWiFi();
+
+        }
+
+    
+        virtual bool enable() {
+
+            
+            this->setEnabled(this->init()==Module::OK);
+            return this->isEnabled();
+
+        }
+
+        virtual bool disable() {
+
+            return stopWiFi();
+
+        }
+
+        virtual void update(){}
+        
+
+
+};
