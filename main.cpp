@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "modules/inc/PWMModule.h"
 #include "modules/inc/WiFiModule.h"
+#include "modules/inc/MQTTModule.h"
 #include "task.h"
 #include <cstdio>
 
@@ -39,6 +40,7 @@ int main() {
                      printf("RSSI: %d\n",m_wifi.getRSSI());
                      sleep_ms(1000);
                   }
+   MQTTModule m_mqtt(std::string(STATIC_HOST_IP));
 
 
 

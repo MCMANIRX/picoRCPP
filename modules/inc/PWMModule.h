@@ -68,7 +68,7 @@ class PWMModule : public Module {
 
         virtual bool enable() {
 
-            this->setEnabled(init());
+            this->setEnabled(_init());
             return this->isEnabled();
 
         }
@@ -88,10 +88,10 @@ class PWMModule : public Module {
 
         }
 
-        virtual int init() {
+     //   virtual int init() {
 
-            return _init();
-        }
+    //        return _init();
+   //     }
 
 
 

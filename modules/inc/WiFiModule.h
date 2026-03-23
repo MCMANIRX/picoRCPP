@@ -23,17 +23,15 @@ class WiFiModule : public Module {
         int stopWiFi();
 
 
-        virtual int init() {
-
-            return initWiFi();
-
+        int connect() {
+            return this->initWiFi()==Module::OK;
         }
 
     
         virtual bool enable() {
 
             
-            this->setEnabled(this->init()==Module::OK);
+            this->setEnabled(true);
             return this->isEnabled();
 
         }

@@ -9,7 +9,7 @@ include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kerne
 
 project(rc_rtos C CXX ASM)
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(PICO_BOARD pico_w)
 
@@ -21,6 +21,7 @@ add_executable(rc_rtos
     modules/Module.cpp 
     modules/PWMModule.cpp
     modules/WiFiModule.cpp
+    modules/MQTTModule.cpp
     main.cpp 
 )
 set(PICO_BOARD pico_w)

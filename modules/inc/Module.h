@@ -31,7 +31,7 @@ class Module
         virtual void update() = 0;
         virtual bool enable() = 0;
         virtual bool disable() = 0;
-        virtual int init() = 0;
+    ///    virtual int init() = 0;
 
         bool isEnabled() const;
         void setEnabled(bool on);

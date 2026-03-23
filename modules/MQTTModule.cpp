@@ -1,19 +1,34 @@
-#include "MQTTModule.h"
-#include "../inc/rc_config.h"
+#include "FreeRTOS.h"
+#include "inc/MQTTModule.h"
+#include "../inc/mqtt_helper.h"
+// #include "../inc/rc_config.h"
 
 
 
-int MQTTModule::connect(std::string client_id)
-{
-    client = mqtt_client_new();
-    ci.client_id = id.c_str(); //"rc_unassigned";
+MQTTModule::MQTTModule(std::string host_ip, QOS defaultQOS = QOS_0):defaultQOS(defaultQOS) {
+    
+    this->good_host_ip = ip4addr_aton(host_ip.c_str(), &this->host_ip);
 
-    mqtt_client_connect(client, &ip, 1883, mqtt_connection_cb, 0, &ci);
-    return subscribe(CTRL_TOPIC);
 }
 
-void MQTTModule::disconnect()
-{
-    unsubscribe(CTRL_TOPIC);
-    mqtt_disconnect(client);
+
+MQTTModule::~MQTTModule() {
+    
 }
+
+int MQTTModule::connect() {
+
+    return helper_connect(this->client_id.c_str());
+
+}
+
+int MQTTModule::init() {
+    return mqtt_init(this->client_id.c_str());
+}
+
+void MQTTModule::disconnect() {
+
+    helper_disconnect();
+
+}
+
