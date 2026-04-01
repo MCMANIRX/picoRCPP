@@ -22,36 +22,77 @@ This level provides the strongest guarantee of message delivery but involves mor
 
 */
 
+
+
+#ifndef MQTT_H
+#define MQTT_H
+#include "FreeRTOS.h"
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "string.h"
+
+#include "pico/cyw43_arch.h"
+#include "lwip/ip_addr.h"
+#include "lwip/dns.h"
+
+
 #include "lwip/ip_addr.h"
 #include "lwip/apps/mqtt.h"
 #include "rc_config.h"
-#include "queue.h"
+ // #include "queue.h"
 #include "hardware/watchdog.h"
 
 
 
+struct message_buf {
 
-// MESSAGE rcv_buf;
+    u8_t topic[64];
+    u8_t data[256];
+    u16_t len;
+    bool isNewData;
 
-err_t err;
-ip_addr_t ip;
-mqtt_client_t *client;
-// struct mqtt_connect_client_info_t ci;
+};
 
-char *_id;  //MQTT client id for reconnect
-int (*_ext_callback)(); //ptr for callback fcn local to main.c
+extern ip_addr_t ip;
+extern mqtt_client_t *client;
+extern struct mqtt_connect_client_info_t ci;
 
-int helper_connect(char *id);
+
+
+extern char _id[64];  //MQTT client id for reconnect
+extern void (*_ext_callback)(void*, struct message_buf* ); //ptr for callback fcn for MQTTModule
+extern void *ctx ; // MQTTModule ptr
+
+
+extern struct message_buf mbuf;
+
+
+
+
+
+
+static int init_message_buf(struct message_buf * buf) {
+
+    if(buf==NULL)return 0;
+
+    memset(buf->data,0,sizeof(buf->data)/sizeof(uint8_t));
+    memset(buf->topic,0,sizeof(buf->topic)/sizeof(uint8_t));
+    buf->isNewData = false;
+    buf->len = 0;
+
+    return 1;
+}
+
+
+
+static int helper_connect(const char *id);
 
 
 
 /// @brief 
 /// @param count
 /// @param delay 
-void blink(uint8_t count, int delay)
+static void blink(uint8_t count, int delay)
 {
 
     for (int i = 0; i < count; ++i)
@@ -71,10 +112,10 @@ void blink(uint8_t count, int delay)
 static void pub_request_cb(void *arg, err_t result)
 {
     // printf("Publish result: %d\n", result);
-    mqtt_client_t *client = (mqtt_client_t *)arg;
+   // mqtt_client_t *client = (mqtt_client_t *)arg;
 }
 
-void sub_request_cb(void *arg, err_t result)
+static void sub_request_cb(void *arg, err_t result)
 {
     ///   printf("Subscribe result: %d\n", result);
 }
@@ -83,27 +124,29 @@ static void incoming_publish_cb(void *arg, const char *topic, u32_t tot_len)
 {
 
     tot_len = strlen(topic);
-    memcpy(rcv_buf.topic, topic, tot_len);
-    //    printf("Topic %s. %d\n", rcv_buf.topic, tot_len);
+    memcpy(mbuf.topic, topic, tot_len);
+    //    printf("Topic %s. %d\n", mbuf.topic, tot_len);
     //  printf("Topic %s. %d\n", topic, tot_len);
 }
 
 static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
 {
-    memcpy(rcv_buf.data, data, len);
+    memcpy(mbuf.data, data, len);
 
      //call external callback in main.c
-    _ext_callback(rcv_buf.topic, rcv_buf.data);
-    memset(rcv_buf.topic,0,TOPIC_SIZE);
-    memset(rcv_buf.data,0,MESSAGE_SIZE);
+  //  _ext_callback(mbuf.topic, mbuf.data);
+    _ext_callback(ctx, &mbuf);
+
+    memset(mbuf.topic,0,TOPIC_SIZE);
+    memset(mbuf.data,0,MESSAGE_SIZE);
 }
 
 static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status)
 {
-    if (status == MQTT_CONNECT_ACCEPTED)
+    if (status == MQTT_CONNECT_ACCEPTED && client != NULL)
     {
-        blink(3, 50);
 
+        blink(3,25);
         mqtt_set_inpub_callback(client, incoming_publish_cb, incoming_data_cb, arg);
     }
 
@@ -137,49 +180,62 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
 
     }
 }
+
+
+
+
+
 // ###################################################
 
 /// @brief Connects locally defined callback to backend defined in this header file.
-void helper_set_message_decoder(void (*ext_callback)(char *topic, char *data))
+static void helper_set_message_decoder(void (*ext_callback)(void *ctx, struct message_buf *msg))
 {
 
     _ext_callback = ext_callback;
+
 }
 
-int helper_subscribe(char *topic)
+static int helper_subscribe(char *topic)
 {
+
     return mqtt_subscribe(client, topic, 1, sub_request_cb, NULL);
+
 }
 
-int helper_unsubscribe(char *topic)
+static int helper_unsubscribe(char *topic)
 {
 
     return mqtt_unsubscribe(client, topic, sub_request_cb, NULL);
+
 }
 
 
-int helper_publish(char *topic, char *payload, int qos)
+static int helper_publish(char *topic, char *payload, int qos)
 {
 
     // u8_t qos = 2;        //changed to 0, 2 has issues with pico
     // u8_t retain = 0;
 
     return mqtt_publish(client, topic, payload, strlen(payload), qos, 0, pub_request_cb, NULL);
+
 }
 
 
-int helper_publish_with_strlen(char *topic, char *payload, int qos, int len)
+static int helper_publish_with_strlen(char *topic, char *payload, int qos, int len)
 {
 
     // u8_t qos = 2;        //changed to 0, 2 has issues with pico
     // u8_t retain = 0;
 
     return mqtt_publish(client, topic, payload, len, qos, 0, pub_request_cb, NULL);
+
 }
 
 
-void helper_set_id_for_reconnect(char *id) {
-    _id = id;
+static void helper_set_id_for_reconnect(const char *id) {
+    
+    memcpy(_id,id,strlen(id));
+
 }
 
 
@@ -188,36 +244,64 @@ void helper_set_id_for_reconnect(char *id) {
 
 // ################## Connectivity ###################
 
-int helper_connect(const char *id)
-{
-    mqtt_client_t *_client = mqtt_client_new();
-    client = _client;
-    ci.client_id = id; //"rc_unassigned";
-
-    mqtt_client_connect(client, &ip, 1883, mqtt_connection_cb, 0, &ci);
-    return helper_subscribe(CTRL_TOPIC);
-}
-
-void helper_disconnect()
+static void helper_disconnect()
 {
     helper_unsubscribe(CTRL_TOPIC);
     mqtt_disconnect(client);
 }
+
+
+static int helper_connect(const char *id)
+{
+    if(client!=NULL)
+        helper_disconnect();
+        
+    cyw43_arch_lwip_begin();
+    client = mqtt_client_new();
+    cyw43_arch_lwip_end();
+
+    ci.client_id = id;//"rc_unassigned";
+    mqtt_client_connect(client, &ip, 1883, mqtt_connection_cb, 0, &ci);
+
+   // printf("ERR: %X",mqtt_client_connect(client, &ip, 1883, mqtt_connection_cb, 0, &ci));
+    return helper_subscribe(CTRL_TOPIC);
+}
+
+
+
+
+
+
 // ###################################################
 
 static int _mqtt_init(const char *id)
 {
 
     memset(&ci, 0, sizeof(ci));
+
     return helper_connect(id);
+
 }
 
-int mqtt_init(const char *id)
+static int mqtt_init(ip_addr_t host_ip, const char *id, void *in_ctx, void (*ext_callback)(void *ctx, struct message_buf *msg))
 {
 
   //  wifi_init();
+    ip = host_ip;
+    int ret = _mqtt_init(id);
+    helper_set_id_for_reconnect(id);
+    helper_set_message_decoder(ext_callback);
+    ctx = in_ctx;
 
-    _mqtt_init(id);
-    set_id_for_reconnect(id);
+    init_message_buf(&mbuf);
+
+
+
+
+    return ret;
+
 
 }
+
+#endif
+

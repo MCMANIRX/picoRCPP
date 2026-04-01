@@ -1,3 +1,7 @@
+
+#ifndef RC_CONFIG
+#define RC_CONFIG
+
 #define STATIC_HOST_IP   "192.168.1.137" // IP of my laptop 
 #define HOTSPOT_IP       "192.168.137.1"
 #define SSID             "XboxOne"
@@ -6,6 +10,9 @@
 #define CTRL_TOPIC       "/rc_ctrl/+"       // for cient control
 #define RC_TOPIC         "/rc/com"          // outbound car client channel
 #define ASSIGN_REQ       "unassigned"       // to request id
+
+#define TOPIC_SIZE      64
+#define MESSAGE_SIZE    256
 
 #define ENQ              0x5  // incoming tracking
 #define ACK              0x6  // tracking reply
@@ -97,7 +104,7 @@
 
 const float Kp = 5109.0;       // proportional constant 
 
-
+#endif
 
 
 

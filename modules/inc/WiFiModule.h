@@ -13,6 +13,7 @@ class WiFiModule : public Module {
 
 
         WiFiModule(std::string ssid, std::string pass);
+        WiFiModule();
         ~WiFiModule();
 
 

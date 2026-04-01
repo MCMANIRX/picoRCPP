@@ -25,18 +25,20 @@ uint32_t WiFiModule::getIP() const {
 int WiFiModule::initWiFi()
 {
 
+    
+
     if (cyw43_arch_init_with_country(CYW43_COUNTRY_USA))
     {
-       printf("failed to initialise\n");
+  //     printf("failed to initialise\n");
         return 1;
     }
-    printf("initialised\n");
+ //   printf("initialised\n");
 
     cyw43_arch_enable_sta_mode();
 
     if (cyw43_arch_wifi_connect_timeout_ms(ssid.c_str(), pass.c_str(), CYW43_AUTH_WPA2_AES_PSK, 10000))
     {
-        printf("failed to connect\n");
+ //       printf("failed to connect\n");
 
         if(cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) != CYW43_LINK_UP)
             initWiFi();
@@ -44,7 +46,7 @@ int WiFiModule::initWiFi()
 
     if (cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA) != CYW43_LINK_UP)
     {
-        printf("tcp not connected, status = %d\n", cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA));
+  //      printf("tcp not connected, status = %d\n", cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA));
         vTaskDelay(500);
         initWiFi();
     }
@@ -53,13 +55,15 @@ int WiFiModule::initWiFi()
     ip_addr_t ip = cyw43_state.netif[0].ip_addr;
 
     // Following strings are the components of ifcongig[]
+    
     printf("connected as %s\n", ip4addr_ntoa(&ip));
     printf("subnetmask: %s\n", ip4addr_ntoa(&cyw43_state.netif[0].netmask));
     printf("gateway: %s\n", ip4addr_ntoa((ip_addr_t *)&cyw43_state.netif[0].gw.addr));
     printf("DNS: %s\n", ip4addr_ntoa(dns_getserver(0)));
+    
 
     this->getRSSI();
-    printf("RSSI: %d\n",rssi);
+   // printf("RSSI: %d\n",rssi);
 
     
 
@@ -77,3 +81,4 @@ int WiFiModule::stopWiFi(){
 }
 
  WiFiModule::WiFiModule(std::string ssid, std::string pass):ssid(ssid),pass(pass){}
+ WiFiModule::WiFiModule(){}

@@ -23,6 +23,8 @@ add_executable(rc_rtos
     modules/WiFiModule.cpp
     modules/MQTTModule.cpp
     main.cpp 
+
+    inc/mqtt_helper.c
 )
 set(PICO_BOARD pico_w)
 
@@ -34,9 +36,14 @@ ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts
 # pull in common dependencies
 target_link_libraries(rc_rtos 
     pico_stdlib 
+ #   pico_cyw43_arch_lwip_sys_freertos
+    pico_multicore
     FreeRTOS-Kernel 
     FreeRTOS-Kernel-Heap4
     pico_cyw43_arch_lwip_threadsafe_background 
+
+    
+
     pico_lwip_arch
     pico_lwip_mqtt
 
